@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>قرآن رمضان</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+        }
+        select, button {
+            transition: all 0.3s ease-in-out;
+        }
+        button:hover {
+            transform: scale(1.05);
+            background-color: #0d9488;
+        }
+        select:focus {
+            border-color: #0d9488;
+            outline: none;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-900">
+    <header class="bg-teal-600 text-white text-center py-4 text-xl font-bold shadow-lg">
+         القرآن الكريم
+    </header>
+    
+    <main class="p-4 max-w-2xl mx-auto">
+        <section>
+            <h2 class="text-lg font-semibold"> اختر السورة</h2>
+            <select id="surah-list" class="p-2 border rounded w-full"></select>
+            <button onclick="fetchSurah()" class="mt-2 bg-teal-600 text-white px-4 py-2 rounded w-full">عرض السورة</button>
+        </section>
+
+        <section id="quran-text" class="mt-4 p-4 bg-white rounded shadow-lg">
+            <h2 class="text-lg font-semibold"> نص السورة</h2>
+            <div id="ayah-container" class="mt-2 text-lg leading-loose text-center"></div>
+        </section>
+
+        <section class="mt-4">
+            <h2 class="text-lg font-semibold"> استمع للتلاوة</h2>
+            <audio id="quran-audio" controls class="mt-2 w-full shadow-lg rounded-lg"></audio>
+        </section>
+    </main>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            fetchSurahList();
+        });
+
+        async function fetchSurahList() {
+            try {
+                let response = await fetch("https://api.alquran.cloud/v1/surah");
+                let data = await response.json();
+                let surahList = document.getElementById("surah-list");
+                surahList.innerHTML = ""; 
+                data.data.forEach(surah => {
+                    let option = document.createElement("option");
+                    option.value = surah.number;
+                    option.textContent = `${surah.number}. ${surah.englishName} - ${surah.name}`;
+                    surahList.appendChild(option);
+                });
+            } catch (error) {
+                console.error("Error fetching surah list:", error);
+            }
+        }
+
+        async function fetchSurah() {
+            let surahNumber = document.getElementById("surah-list").value;
+            try {
+                let response = await fetch(`https://api.alquran.cloud/v1/surah/${surahNumber}`);
+                let data = await response.json();
+                let ayahContainer = document.getElementById("ayah-container");
+                ayahContainer.innerHTML = "";
+                data.data.ayahs.forEach(ayah => {
+                    let p = document.createElement("p");
+                    p.textContent = `${ayah.text} (${ayah.numberInSurah})`;
+                    p.classList = "p-2";
+                    ayahContainer.appendChild(p);
+                });
+                updateAudio(surahNumber);
+            } catch (error) {
+                console.error("Error fetching surah:", error);
+            }
+        }
+
+        function updateAudio(surahNumber) {
+            let audioPlayer = document.getElementById("quran-audio");
+            let audioUrl = `https://download.quranicaudio.com/qdc/mishari_al_afasy/murattal/${surahNumber}.mp3`;
+            audioPlayer.src = audioUrl;
+            audioPlayer.play().catch(error => console.error("Audio playback error:", error));
+        }
+    </script>
+</body>
+</html>
